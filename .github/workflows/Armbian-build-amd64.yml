@@ -7,6 +7,11 @@ on:
         required: true
         default: 'odroidn2'
         type: string
+      REPO_BRANCH:
+        description: 'Armbian build repository branch'
+        required: true
+        default: 'main'
+        type: string
       RELEASE:
         description: 'Release name'
         required: true
@@ -42,16 +47,19 @@ on:
       INSTALL_HEADERS:
         description: 'Install headers'
         required: true
-        default: 'yes'
+        default: 'no'
         type: choice
         options:
           - 'yes'
           - 'no'
-      REPO_BRANCH:
-        description: 'Armbian build repository branch'
+      KERNEL_GIT:
+        description: 'Kernel_git'
         required: true
-        default: 'main'
-        type: string
+        default: 'shallow'
+        type: choice
+        options:
+          - 'full'
+          - 'shallow'
 env:
   RELEASE_BRANCH: "current"
 concurrency:
@@ -97,9 +105,10 @@ jobs:
             BUILD_MINIMAL=${{ github.event.inputs.BUILD_MINIMAL }} \
             BUILD_DESKTOP=${{ github.event.inputs.BUILD_DESKTOP }} \
             KERNEL_CONFIGURE=no \
-            EXTRAWIFI=yes \
+            EXTRAWIFI=no \
             INSTALL_HEADERS=${{ github.event.inputs.INSTALL_HEADERS }} \
             COMPRESS_OUTPUTIMAGE=xz \
+	    KERNEL_GIT=${{ github.event.inputs.KERNEL_GIT }} \
             ${{ steps.desktop-vars.outputs.desktop_env }}
           echo "status=success" >> $GITHUB_OUTPUT
           echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
