@@ -1,0 +1,113 @@
+name: Armbian Build For Ubuntu 24.04 amdserver
+on:
+  workflow_dispatch:
+    inputs:
+      BOARD:
+        description: 'Board to build for'
+        required: true
+        default: 'odroidn2'
+        type: string
+      RELEASE:
+        description: 'Release name'
+        required: true
+        default: 'bookworm'
+        type: choice
+        options:
+          - 'bookworm'
+          - 'bullseye'
+          - 'buster'
+          - 'focal'
+          - 'jammy'
+          - 'noble'
+          - 'oracular'
+          - 'plucky'
+          - 'sid'
+          - 'trixie'
+      BUILD_MINIMAL:
+        description: 'Build minimal image'
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+      BUILD_DESKTOP:
+        description: 'Build desktop image'
+        required: true
+        default: 'no'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+      INSTALL_HEADERS:
+        description: 'Install headers'
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+      REPO_BRANCH:
+        description: 'Armbian build repository branch'
+        required: true
+        default: 'main'
+        type: string
+env:
+  RELEASE_BRANCH: "current"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  build-armbian:
+    name: "Build Armbian"
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    steps:
+      - name: AMD64 Env Patch
+        run: |
+          sudo -E apt-get -y update
+          sudo -E apt-get -y purge azure-cli ghc* zulu* llvm* firefox google* dotnet* powershell openjdk* mongodb* moby* || true
+          sudo -E apt-get -y install acl aptly aria2 axel bc binfmt-support binutils-aarch64-linux-gnu bison bsdextrautils btrfs-progs build-essential busybox ca-certificates ccache clang coreutils cpio crossbuild-essential-arm64 cryptsetup curl debian-archive-keyring debian-keyring debootstrap device-tree-compiler dialog dirmngr distcc dosfstools dwarves e2fsprogs expect f2fs-tools fakeroot fdisk file flex gawk gcc-arm-linux-gnueabi gdisk git gpg gzip imagemagick jq kmod libbison-dev libc6-dev-armhf-cross libcrypto++-dev libelf-dev libfdt-dev libfile-fcntllock-perl libfl-dev libfuse-dev libgcc-12-dev-arm64-cross libgmp3-dev liblz4-tool libmpc-dev libncurses-dev libpython3-dev libssl-dev libusb-1.0-0-dev linux-base lld llvm locales lz4 lzma lzop make mtools ncurses-base ncurses-term nfs-kernel-server ntpdate openssl p7zip p7zip-full parallel parted patchutils pbzip2 pigz pixz pkg-config pv python3 python3-dev python3-setuptools qemu-user-static rdfind rename rsync sudo swig tar tree u-boot-tools udev unzip util-linux uuid uuid-dev uuid-runtime vim wget whiptail xfsprogs xsltproc xz-utils zip zlib1g-dev zstd
+          # sudo -E apt-get -y install $(curl -fsSL https://ophub.org/ubuntu2404-build-armbian-depends)
+          sudo -E systemctl daemon-reload
+      - name: Download Armbian Soure
+        run: |
+          git clone --depth 1 -b ${{ github.event.inputs.REPO_BRANCH }} https://github.com/armbian/build.git armbian-build
+          cd armbian-build
+      - name: Set desktop environment variables
+        id: desktop-vars
+        run: |
+          if [ "${{ github.event.inputs.BUILD_DESKTOP }}" == "yes" ]; then
+            echo "desktop_env=DESKTOP_ENVIRONMENT=xfce DESKTOP_ENVIRONMENT_CONFIG_NAME=config_base DESKTOP_APPGROUPS_SELECTED=\"browsers, desktop_tools, editor, internet, multimedia, programming\"" >> $GITHUB_OUTPUT
+          else
+            echo "desktop_env=" >> $GITHUB_OUTPUT
+          fi
+      - name: Build Armbian
+        working-directory: ./armbian-build
+	id: build
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 2>/dev/null || true
+          ./compile.sh \
+            BOARD=${{ github.event.inputs.BOARD }} \
+            BRANCH=${{ env.RELEASE_BRANCH }} \
+            RELEASE=${{ github.event.inputs.RELEASE }} \
+            BUILD_MINIMAL=${{ github.event.inputs.BUILD_MINIMAL }} \
+            BUILD_DESKTOP=${{ github.event.inputs.BUILD_DESKTOP }} \
+            KERNEL_CONFIGURE=no \
+            EXTRAWIFI=yes \
+            INSTALL_HEADERS=${{ github.event.inputs.INSTALL_HEADERS }} \
+            COMPRESS_OUTPUTIMAGE=xz \
+            ${{ steps.desktop-vars.outputs.desktop_env }}
+      - name: Get image filename
+        id: get-filename
+        working-directory: ./armbian-build
+        run: echo "filename=$(basename $(ls output/images/*.img.xz) .img.xz)" >> $GITHUB_OUTPUT
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.ref_name }}-${{ steps.get-filename.outputs.filename }}
+          path: ./armbian-build/output/images/${{ steps.get-filename.outputs.filename }}.img.xz
+          retention-days: 5
