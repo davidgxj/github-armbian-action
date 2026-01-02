@@ -1,4 +1,4 @@
-name: Armbian Build For ubuntu 24.04 armserver
+name: Build Ubuntu24.04 armserver
 on:
   workflow_dispatch:
     inputs:
