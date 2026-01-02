@@ -1,0 +1,96 @@
+name: Armbian Build For ubuntu 24.04 armserver
+on:
+  workflow_dispatch:
+    inputs:
+      BOARD:
+        description: 'Board to build for'
+        required: true
+        default: 'odroidn2'
+        type: string
+      RELEASE:
+        description: 'Release name'
+        required: true
+        default: 'bookworm'
+        type: choice
+        options:
+          - 'bookworm'
+          - 'bullseye'
+          - 'buster'
+          - 'focal'
+          - 'jammy'
+          - 'noble'
+          - 'oracular'
+          - 'plucky'
+          - 'sid'
+          - 'trixie'
+      BUILD_MINIMAL:
+        description: 'Build minimal image'
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+      BUILD_DESKTOP:
+        description: 'Build desktop image'
+        required: true
+        default: 'no'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+      INSTALL_HEADERS:
+        description: 'Install headers'
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+      REPO_BRANCH:
+        description: 'Armbian build repository branch'
+        required: true
+        default: 'main'
+        type: string
+env:
+  RELEASE_BRANCH: "current"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  build-armbian:
+    name: "Build Armbian"
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Download Armbian Soure
+        run: |
+          git clone --depth 1 -b ${{ github.event.inputs.REPO_BRANCH }} https://github.com/armbian/build.git armbian-build
+          cd armbian-build
+      - name: Build Armbian
+        working-directory: ./armbian-build
+	id: build
+        run: |
+          ./compile.sh \
+            BOARD=${{ github.event.inputs.BOARD }} \
+            BRANCH=${{ env.RELEASE_BRANCH }} \
+            RELEASE=${{ github.event.inputs.RELEASE }} \
+            BUILD_MINIMAL=${{ github.event.inputs.BUILD_MINIMAL }} \
+            BUILD_DESKTOP=${{ github.event.inputs.BUILD_DESKTOP }} \
+            KERNEL_CONFIGURE=no \
+            EXTRAWIFI=yes \
+            INSTALL_HEADERS=${{ github.event.inputs.INSTALL_HEADERS }} \
+            COMPRESS_OUTPUTIMAGE=xz \
+            ${{ steps.desktop-vars.outputs.desktop_env }}
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        if: steps.build.outputs.status == 'success' && !cancelled()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.build.outputs.release_tag }}
+          files: |
+            armbian-build/output/images/*
+            
