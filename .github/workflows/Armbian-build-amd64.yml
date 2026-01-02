@@ -101,13 +101,19 @@ jobs:
             INSTALL_HEADERS=${{ github.event.inputs.INSTALL_HEADERS }} \
             COMPRESS_OUTPUTIMAGE=xz \
             ${{ steps.desktop-vars.outputs.desktop_env }}
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
       - name: Get image filename
         id: get-filename
         working-directory: ./armbian-build
         run: echo "filename=$(basename $(ls output/images/*.img.xz) .img.xz)" >> $GITHUB_OUTPUT
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        if: steps.build.outputs.status == 'success' && !cancelled()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{ github.ref_name }}-${{ steps.get-filename.outputs.filename }}
-          path: ./armbian-build/output/images/${{ steps.get-filename.outputs.filename }}.img.xz
-          retention-days: 5
+          tag_name: ${{ steps.build.outputs.release_tag }}
+          files: |
+            armbian-build/output/images/*
+            
