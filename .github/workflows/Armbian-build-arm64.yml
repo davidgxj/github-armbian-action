@@ -68,7 +68,7 @@ jobs:
           cd armbian-build
       - name: Build Armbian
         working-directory: ./armbian-build
-	    id: build
+        id: build
         run: |
           ./compile.sh \
             BOARD=${{ github.event.inputs.BOARD }} \
