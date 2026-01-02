@@ -1,4 +1,4 @@
-name: Armbian Build For Ubuntu 24.04 amdserver
+name: Build Ubuntu24.04 amdserver
 on:
   workflow_dispatch:
     inputs:
