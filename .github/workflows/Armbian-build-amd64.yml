@@ -87,6 +87,7 @@ jobs:
           fi
       - name: Build Armbian
         working-directory: ./armbian-build
+        id: build
         run: |
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 2>/dev/null || true
           ./compile.sh \
