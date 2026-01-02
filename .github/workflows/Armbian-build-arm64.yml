@@ -88,7 +88,7 @@ jobs:
             EXTRAWIFI=no \
             INSTALL_HEADERS=${{ github.event.inputs.INSTALL_HEADERS }} \
             COMPRESS_OUTPUTIMAGE=xz \
-	    KERNEL_GIT=${{ github.event.inputs.KERNEL_GIT }} \
+            KERNEL_GIT=${{ github.event.inputs.KERNEL_GIT }} \
             ${{ steps.desktop-vars.outputs.desktop_env }}
           echo "status=success" >> $GITHUB_OUTPUT
           echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
