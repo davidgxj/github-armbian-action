@@ -104,7 +104,7 @@ jobs:
             KERNEL_GIT=${{ github.event.inputs.KERNEL_GIT }} \
             ${{ steps.desktop-vars.outputs.desktop_env }}
           echo "status=success" >> $GITHUB_OUTPUT
-          echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+          echo "release_tag=arm64build_${{ github.event.inputs.RELEASE }}_$(date +"%Y.%m")" >> $GITHUB_OUTPUT
       - name: Upload Release
         uses: softprops/action-gh-release@v2
         if: steps.build.outputs.status == 'success' && !cancelled()
