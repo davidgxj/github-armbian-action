@@ -44,6 +44,19 @@ on:
         options:
           - 'yes'
           - 'no'
+      COMPRESS_OUTPUTIMAGE:
+        description: 'Compress output image'
+        required: true
+        default: 'gz'
+        type: choice
+        options:
+          - 'xz'
+          - 'gz'
+          - 'bz2'
+          - 'lz4'
+          - 'lzma'
+          - 'zstd'
+          - 'no'
       INSTALL_HEADERS:
         description: 'Install headers'
         required: true
@@ -74,6 +87,14 @@ jobs:
       packages: write
       id-token: write
     steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 2048
+          temp-reserve-mb: 2048
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
       - name: AMD64 Env Patch
         run: |
           sudo -E apt-get -y update
@@ -107,7 +128,7 @@ jobs:
             KERNEL_CONFIGURE=no \
             EXTRAWIFI=no \
             INSTALL_HEADERS=${{ github.event.inputs.INSTALL_HEADERS }} \
-            COMPRESS_OUTPUTIMAGE=xz \
+            COMPRESS_OUTPUTIMAGE=${{ github.event.inputs.COMPRESS_OUTPUTIMAGE }} \
             KERNEL_GIT=${{ github.event.inputs.KERNEL_GIT }} \
             ${{ steps.desktop-vars.outputs.desktop_env }}
           echo "status=success" >> $GITHUB_OUTPUT
