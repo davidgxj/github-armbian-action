@@ -36,6 +36,16 @@ on:
         options:
           - 'yes'
           - 'no'
+      BRANCH:
+        description: 'Build branch'
+        required: true
+        default: 'current'
+        type: choice
+        options:
+          - 'current'
+          - 'edge'
+          - 'vendor'
+          - 'legacy'
       BUILD_DESKTOP:
         description: 'Build desktop image'
         required: true
@@ -73,8 +83,6 @@ on:
         options:
           - 'full'
           - 'shallow'
-env:
-  RELEASE_BRANCH: "current"
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
@@ -121,7 +129,7 @@ jobs:
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 2>/dev/null || true
           ./compile.sh \
             BOARD=${{ github.event.inputs.BOARD }} \
-            BRANCH=${{ env.RELEASE_BRANCH }} \
+            BRANCH=${{ github.event.inputs.BRANCH }} \
             RELEASE=${{ github.event.inputs.RELEASE }} \
             BUILD_MINIMAL=${{ github.event.inputs.BUILD_MINIMAL }} \
             BUILD_DESKTOP=${{ github.event.inputs.BUILD_DESKTOP }} \
