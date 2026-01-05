@@ -91,6 +91,14 @@ jobs:
     name: "Build Armbian"
     runs-on: ubuntu-24.04-arm
     steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 2048
+          temp-reserve-mb: 2048
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Download Armbian Soure
