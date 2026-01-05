@@ -91,10 +91,13 @@ jobs:
     name: "Build Armbian"
     runs-on: ubuntu-24.04-arm
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Download Armbian Soure
         run: |
           git clone --depth 1 -b ${{ github.event.inputs.REPO_BRANCH }} https://github.com/armbian/build.git armbian-build
-          cd armbian-build
+          mkdir -p armbian-build/userpatches
+          cp -r ${{ github.workspace}}/userpatches/* armbian-build/userpatches/
       - name: Build Armbian
         working-directory: ./armbian-build
         id: build

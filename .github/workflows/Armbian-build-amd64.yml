@@ -113,7 +113,8 @@ jobs:
       - name: Download Armbian Soure
         run: |
           git clone --depth 1 -b ${{ github.event.inputs.REPO_BRANCH }} https://github.com/armbian/build.git armbian-build
-          cd armbian-build
+          mkdir -p armbian-build/userpatches
+          cp -r ${{ github.workspace}}/userpatches/* armbian-build/userpatches/
       - name: Set desktop environment variables
         id: desktop-vars
         run: |
