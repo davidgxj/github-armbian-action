@@ -120,6 +120,11 @@ jobs:
             ${{ steps.desktop-vars.outputs.desktop_env }}
           echo "status=success" >> $GITHUB_OUTPUT
           echo "release_tag=arm64build_${{ github.event.inputs.RELEASE }}_$(date +"%Y.%m")" >> $GITHUB_OUTPUT
+      - name: Show output
+        working-directory: ./armbian-build/output
+        run: |
+          ls -al
+          echo "---------"
       - name: Upload Release
         uses: softprops/action-gh-release@v2
         if: steps.build.outputs.status == 'success' && !cancelled()
