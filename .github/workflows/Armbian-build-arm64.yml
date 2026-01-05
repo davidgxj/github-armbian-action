@@ -90,6 +90,10 @@ jobs:
   build-armbian:
     name: "Build Armbian"
     runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
