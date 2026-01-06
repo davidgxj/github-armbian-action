@@ -102,6 +102,14 @@ jobs:
           git clone --depth 1 -b ${{ github.event.inputs.REPO_BRANCH }} https://github.com/armbian/build.git armbian-build
           mkdir -p armbian-build/userpatches
           cp -r ${{ github.workspace}}/userpatches/* armbian-build/userpatches/
+      - name: Set desktop environment variables
+        id: desktop-vars
+        run: |
+          if [ "${{ github.event.inputs.BUILD_DESKTOP }}" == "yes" ]; then
+            echo "desktop_env=DESKTOP_ENVIRONMENT=xfce DESKTOP_ENVIRONMENT_CONFIG_NAME=config_base DESKTOP_APPGROUPS_SELECTED=\"browsers, desktop_tools, editor, internet, multimedia, programming\"" >> $GITHUB_OUTPUT
+          else
+            echo "desktop_env=" >> $GITHUB_OUTPUT
+          fi
       - name: Build Armbian
         working-directory: ./armbian-build
         id: build
