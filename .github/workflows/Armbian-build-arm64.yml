@@ -130,12 +130,12 @@ jobs:
           IMAGE_PATH="armbian-build/output/images"
             if [ -d "$IMAGE_PATH" ]; then
               cd $IMAGE_PATH
-              # 如果已经有 zst 就跳过，如果没有就手动压一个
+              # 如果已经有 xz 就跳过，如果没有就手动压一个
               ls -lh
               for img in *.img; do
                 if [ -f "$img" ]; then
                   echo "Compressing $img..."
-                  zstd -15 --rm "$img"
+                  xz -T0 -9e "$img"
                 fi
                done
              fi
